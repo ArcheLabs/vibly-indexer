@@ -1,0 +1,20 @@
+{
+  "name": "vibly-indexer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SubQuery indexer for vibly-chain OpenGov",
+  "scripts": {
+    "codegen": "subql codegen",
+    "build": "subql build",
+    "start:docker": "docker-compose up --pull always",
+    "dev": "subql-node-substrate -f ."
+  },
+  "dependencies": {
+    "@subql/types-substrate": "^3.0.0",
+    "@subql/utils": "^3.0.0"
+  },
+  "devDependencies": {
+    "@subql/cli": "^5.0.0",
+    "typescript": "~5.4.0"
+  }
+}

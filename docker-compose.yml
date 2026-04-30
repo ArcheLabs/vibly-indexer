@@ -1,0 +1,75 @@
+version: "3"
+
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: vibly_indexer
+      POSTGRES_USER: subquery
+      POSTGRES_PASSWORD: subquery
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U subquery -d vibly_indexer"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── SubQuery node ───────────────────────────────────────────────────────────
+  subquery-node:
+    image: onfinality/subql-node-substrate:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      DB_USER: subquery
+      DB_PASS: subquery
+      DB_DATABASE: vibly_indexer
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      # Override endpoint via env if not using localhost
+      ENDPOINT: ${ENDPOINT:-ws://host.docker.internal:9944}
+      CHAIN_ID: ${CHAIN_ID:-substrate:vibly-solo}
+      START_BLOCK: ${START_BLOCK:-1}
+    volumes:
+      - .:/app
+    command:
+      - "-f=/app"
+      - "--db-schema=app"
+      - "--workers=1"
+      - "--batch-size=30"
+      - "--unfinalized-blocks=true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ── SubQuery query service (GraphQL) ────────────────────────────────────────
+  graphql-engine:
+    image: onfinality/subql-query:latest
+    depends_on:
+      subquery-node:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      DB_USER: subquery
+      DB_PASS: subquery
+      DB_DATABASE: vibly_indexer
+      DB_HOST: postgres
+      DB_PORT: "5432"
+    ports:
+      - "3010:3000"
+    command:
+      - "--name=app"
+      - "--playground"
+      - "--indexer=http://subquery-node:3000"
+
+volumes:
+  postgres_data:

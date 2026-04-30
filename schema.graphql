@@ -1,0 +1,117 @@
+"""
+GraphQL schema for vibly-indexer SubQuery project.
+
+Indexes vibly-chain solo-node OpenGov pallet events:
+  pallet_referenda, pallet_conviction_voting, pallet_preimage,
+  pallet_scheduler, pallet_treasury
+"""
+
+# ─── Checkpoint ──────────────────────────────────────────────────────────────
+
+type GovernanceCheckpoint @entity {
+  """Singleton key: chain identifier, e.g. 'substrate:vibly-solo'"""
+  id: ID!
+  blockNumber: BigInt!
+  blockHash: String!
+  updatedAt: Date!
+}
+
+# ─── Referenda (proposals) ───────────────────────────────────────────────────
+
+type GovernanceSubject @entity {
+  """Composite key: '<chainId>:<referendumIndex>'"""
+  id: ID!
+  chainId: String!
+  referendumIndex: Int!
+
+  # lifecycle
+  status: String!        # Submitted | Deciding | Confirming | Approved | Rejected | Cancelled | TimedOut | Killed
+  track: Int!
+  submittedAt: BigInt!
+  decidingSince: BigInt
+  confirmingSince: BigInt
+  endsAt: BigInt
+  decidedAt: BigInt
+
+  # proposal
+  proposalHash: String
+  proposalLen: Int
+  proposalDecoded: String  # hex-encoded, filled once preimage is noted
+
+  # tally (snapshot at latest event)
+  ayeVotes: BigInt!
+  nayVotes: BigInt!
+  abstainVotes: BigInt!
+  supportPct: Float
+
+  # relations
+  votes: [GovernanceVote] @derivedFrom(field: "subject")
+  delegations: [GovernanceDelegation] @derivedFrom(field: "subject")
+
+  updatedAt: Date!
+}
+
+# ─── Votes ───────────────────────────────────────────────────────────────────
+
+type GovernanceVote @entity {
+  """Composite key: '<chainId>:<referendumIndex>:<voter>'"""
+  id: ID!
+  chainId: String!
+  referendumIndex: Int!
+  voter: String!
+  stance: String!            # Aye | Nay | Abstain
+  conviction: Int!           # 0-6
+  balance: BigInt!
+  isRemoved: Boolean!
+  subject: GovernanceSubject!
+  blockNumber: BigInt!
+  extrinsicIndex: Int
+  updatedAt: Date!
+}
+
+# ─── Delegations ─────────────────────────────────────────────────────────────
+
+type GovernanceDelegation @entity {
+  """Composite key: '<chainId>:<track>:<delegator>'"""
+  id: ID!
+  chainId: String!
+  track: Int!
+  delegator: String!
+  delegatee: String!
+  conviction: Int!
+  balance: BigInt!
+  isActive: Boolean!
+  subject: GovernanceSubject
+  blockNumber: BigInt!
+  updatedAt: Date!
+}
+
+# ─── Preimages ───────────────────────────────────────────────────────────────
+
+type Preimage @entity {
+  """Preimage hash"""
+  id: ID!
+  chainId: String!
+  hash: String!
+  data: String!      # hex
+  len: Int!
+  status: String!    # Noted | Requested | Cleared
+  blockNumber: BigInt!
+  updatedAt: Date!
+}
+
+# ─── Treasury ────────────────────────────────────────────────────────────────
+
+type TreasuryProposal @entity {
+  """Composite key: '<chainId>:<proposalIndex>'"""
+  id: ID!
+  chainId: String!
+  proposalIndex: Int!
+  proposer: String!
+  beneficiary: String!
+  value: BigInt!
+  bond: BigInt!
+  status: String!    # Proposed | Approved | Rejected | Awarded | Rejected
+  blockNumber: BigInt!
+  updatedAt: Date!
+}
