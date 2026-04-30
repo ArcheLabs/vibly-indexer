@@ -3,7 +3,7 @@ GraphQL schema for vibly-indexer SubQuery project.
 
 Indexes vibly-chain solo-node OpenGov pallet events:
   pallet_referenda, pallet_conviction_voting, pallet_preimage,
-  pallet_scheduler, pallet_treasury
+  pallet_treasury
 """
 
 # ─── Checkpoint ──────────────────────────────────────────────────────────────

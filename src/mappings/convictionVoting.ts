@@ -30,19 +30,23 @@ export async function handleVoteCast(event: SubstrateEvent): Promise<void> {
   let conviction = 0;
   let balance = BigInt(0);
 
-  if (voteRaw["standard"]) {
-    const std = voteRaw["standard"] as { vote: { aye: boolean; conviction: string | number }; balance: string };
+  const standard = getVariant(voteRaw, "standard");
+  const splitAbstain = getVariant(voteRaw, "splitAbstain");
+  const split = getVariant(voteRaw, "split");
+
+  if (standard) {
+    const std = standard as { vote: { aye: boolean; conviction: string | number }; balance: string };
     stance = std.vote.aye ? "Aye" : "Nay";
     conviction = typeof std.vote.conviction === "string"
       ? Number(std.vote.conviction.replace(/\D/g, ""))
       : std.vote.conviction;
     balance = BigInt(std.balance ?? "0");
-  } else if (voteRaw["splitAbstain"]) {
+  } else if (splitAbstain) {
     stance = "Abstain";
-    const sa = voteRaw["splitAbstain"] as { aye: string; nay: string; abstain: string };
+    const sa = splitAbstain as { aye: string; nay: string; abstain: string };
     balance = BigInt(sa.abstain ?? "0");
-  } else if (voteRaw["split"]) {
-    const sp = voteRaw["split"] as { aye: string; nay: string };
+  } else if (split) {
+    const sp = split as { aye: string; nay: string };
     // Treat split as Aye if aye > nay, else Nay
     const aye = BigInt(sp.aye ?? "0");
     const nay = BigInt(sp.nay ?? "0");
@@ -137,6 +141,14 @@ export async function handleDelegated(event: SubstrateEvent): Promise<void> {
     delegation.updatedAt = timestamp;
   }
   await delegation.save();
+}
+
+function getVariant(record: Record<string, unknown>, key: string): unknown {
+  return record[key] ?? record[upperFirst(key)];
+}
+
+function upperFirst(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 // ─── Undelegated ─────────────────────────────────────────────────────────────

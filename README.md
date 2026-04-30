@@ -134,6 +134,17 @@ query {
 }
 ```
 
+## Phase E readback checklist
+
+For the Vibly Chain / OpenGov real loop, the indexer is expected to provide the coordinator with:
+
+- `GovernanceSubject` after `referenda.Submitted`, with a stable `referendumIndex` and `id`.
+- Updated subject status after `DecisionStarted`, `ConfirmStarted`, `Approved`, `Rejected`, `Cancelled`, `TimedOut`, or `Killed`.
+- `GovernanceVote` after `convictionVoting.Voted`, including `voter`, `stance`, `conviction`, `balance`, `blockNumber`, and `extrinsicIndex`.
+- `GovernanceCheckpoint` updates so coordinator backend freshness is per chain.
+
+The Substrate event JSON shape can use either lower-case or PascalCase enum variant keys. Vote mapping handles both forms for `Standard`, `Split`, and `SplitAbstain`.
+
 ## Docker Compose 服务
 
 | 服务 | 镜像 | 端口 |
