@@ -4,9 +4,9 @@
  * Events handled: Noted, Requested, Cleared
  */
 
-import type { SubstrateEvent } from "@subql/types-substrate";
-import { Preimage } from "../../types/models/Preimage.js";
-import { CHAIN_ID } from "./utils.js";
+import type { SubstrateEvent } from "@subql/types";
+import { Preimage } from "../types/models/Preimage";
+import { CHAIN_ID } from "./utils";
 
 export async function handlePreimageNoted(
   event: SubstrateEvent,

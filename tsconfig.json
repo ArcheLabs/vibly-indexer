@@ -2,16 +2,23 @@
   "compilerOptions": {
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "module": "CommonJS",
+    "esModuleInterop": true,
+    "importHelpers": true,
+    "declaration": true,
+    "module": "commonjs",
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
-    "target": "ES2020",
+    "target": "es2017",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "project.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "node_modules/@subql/types-core/dist/global.d.ts",
+    "node_modules/@subql/types/dist/global.d.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

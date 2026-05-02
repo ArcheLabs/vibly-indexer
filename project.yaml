@@ -1,0 +1,131 @@
+# // Auto-generated , DO NOT EDIT
+specVersion: 1.0.0
+name: vibly-indexer
+version: 0.1.0
+runner:
+  node:
+    name: '@subql/node'
+    version: '>=3.0.1'
+  query:
+    name: '@subql/query'
+    version: '*'
+description: >-
+  Indexes vibly-chain solo-node OpenGov: referenda, conviction voting, preimage,
+  treasury
+repository: ''
+schema:
+  file: ./schema.graphql
+network:
+  endpoint: ws://127.0.0.1:9944
+  chainId: '0xbe833095c04ed041b47ea7aee77ea5ede620b91a9c44bc070e395443b906eb6b'
+  bypassBlocks: []
+dataSources:
+  - kind: substrate/Runtime
+    startBlock: 1
+    mapping:
+      file: ./dist/index.js
+      handlers:
+        - kind: substrate/EventHandler
+          handler: handleReferendumSubmitted
+          filter:
+            module: referenda
+            method: Submitted
+        - kind: substrate/EventHandler
+          handler: handleReferendumDecisionStarted
+          filter:
+            module: referenda
+            method: DecisionStarted
+        - kind: substrate/EventHandler
+          handler: handleReferendumConfirmStarted
+          filter:
+            module: referenda
+            method: ConfirmStarted
+        - kind: substrate/EventHandler
+          handler: handleReferendumApproved
+          filter:
+            module: referenda
+            method: Approved
+        - kind: substrate/EventHandler
+          handler: handleReferendumRejected
+          filter:
+            module: referenda
+            method: Rejected
+        - kind: substrate/EventHandler
+          handler: handleReferendumCancelled
+          filter:
+            module: referenda
+            method: Cancelled
+        - kind: substrate/EventHandler
+          handler: handleReferendumTimedOut
+          filter:
+            module: referenda
+            method: TimedOut
+        - kind: substrate/EventHandler
+          handler: handleReferendumKilled
+          filter:
+            module: referenda
+            method: Killed
+        - kind: substrate/EventHandler
+          handler: handleReferendumConfirmAborted
+          filter:
+            module: referenda
+            method: ConfirmAborted
+        - kind: substrate/EventHandler
+          handler: handleVoteCast
+          filter:
+            module: convictionVoting
+            method: Voted
+        - kind: substrate/EventHandler
+          handler: handleVoteRemoved
+          filter:
+            module: convictionVoting
+            method: VoteRemoved
+        - kind: substrate/EventHandler
+          handler: handleDelegated
+          filter:
+            module: convictionVoting
+            method: Delegated
+        - kind: substrate/EventHandler
+          handler: handleUndelegated
+          filter:
+            module: convictionVoting
+            method: Undelegated
+        - kind: substrate/EventHandler
+          handler: handlePreimageNoted
+          filter:
+            module: preimage
+            method: Noted
+        - kind: substrate/EventHandler
+          handler: handlePreimageRequested
+          filter:
+            module: preimage
+            method: Requested
+        - kind: substrate/EventHandler
+          handler: handlePreimageCleared
+          filter:
+            module: preimage
+            method: Cleared
+        - kind: substrate/EventHandler
+          handler: handleTreasuryProposed
+          filter:
+            module: treasury
+            method: Proposed
+        - kind: substrate/EventHandler
+          handler: handleTreasuryApproved
+          filter:
+            module: treasury
+            method: Approved
+        - kind: substrate/EventHandler
+          handler: handleTreasuryRejected
+          filter:
+            module: treasury
+            method: Rejected
+        - kind: substrate/EventHandler
+          handler: handleTreasuryAwarded
+          filter:
+            module: treasury
+            method: Awarded
+        - kind: substrate/BlockHandler
+          handler: handleBlock
+          filter:
+            modulo: 10

@@ -5,7 +5,7 @@
  * a single `./dist/index.js` bundle path.
  */
 
-export { handleBlock } from "./mappings/block.js";
+export { handleBlock } from "./mappings/block";
 
 export {
   handleReferendumSubmitted,
@@ -17,24 +17,26 @@ export {
   handleReferendumCancelled,
   handleReferendumTimedOut,
   handleReferendumKilled,
-} from "./mappings/referenda.js";
+} from "./mappings/referenda";
 
 export {
   handleVoteCast,
   handleVoteRemoved,
   handleDelegated,
   handleUndelegated,
-} from "./mappings/convictionVoting.js";
+} from "./mappings/convictionVoting";
 
 export {
   handlePreimageNoted,
   handlePreimageRequested,
   handlePreimageCleared,
-} from "./mappings/preimage.js";
+} from "./mappings/preimage";
 
 export {
   handleTreasuryProposed,
   handleTreasuryApproved,
   handleTreasuryRejected,
   handleTreasuryAwarded,
-} from "./mappings/treasury.js";
+} from "./mappings/treasury";
+
+import "@polkadot/api-augment";

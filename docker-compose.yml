@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   # ── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
@@ -12,6 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-subquery.sql:/docker-entrypoint-initdb.d/01-subquery.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U subquery -d vibly_indexer"]
       interval: 5s
@@ -20,7 +19,7 @@ services:
 
   # ── SubQuery node ───────────────────────────────────────────────────────────
   subquery-node:
-    image: onfinality/subql-node-substrate:latest
+    image: subquerynetwork/subql-node-substrate:latest
     depends_on:
       postgres:
         condition: service_healthy
@@ -43,6 +42,9 @@ services:
       - "--workers=1"
       - "--batch-size=30"
       - "--unfinalized-blocks=true"
+      - "--disable-historical"
+      - "--network-endpoint"
+      - "${ENDPOINT:-ws://host.docker.internal:9944}"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/ready"]
       interval: 10s
@@ -53,7 +55,7 @@ services:
 
   # ── SubQuery query service (GraphQL) ────────────────────────────────────────
   graphql-engine:
-    image: onfinality/subql-query:latest
+    image: subquerynetwork/subql-query:latest
     depends_on:
       subquery-node:
         condition: service_healthy

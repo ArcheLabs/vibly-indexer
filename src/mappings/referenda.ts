@@ -6,9 +6,9 @@
  *   Approved, Rejected, Cancelled, TimedOut, Killed
  */
 
-import type { SubstrateEvent } from "@subql/types-substrate";
-import { GovernanceSubject } from "../../types/models/GovernanceSubject.js";
-import { CHAIN_ID, subjectId } from "./utils.js";
+import type { SubstrateEvent } from "@subql/types";
+import { GovernanceSubject } from "../types/models/GovernanceSubject";
+import { CHAIN_ID, subjectId } from "./utils";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -49,8 +49,8 @@ export async function handleReferendumSubmitted(
   } = event;
 
   // data: [index: u32, track: u16, proposal: Bounded<RuntimeCall, Hashing>]
-  const index = (data[0] as { toNumber(): number }).toNumber();
-  const track = (data[1] as { toNumber(): number }).toNumber();
+  const index = (data[0] as unknown as { toNumber(): number }).toNumber();
+  const track = (data[1] as unknown as { toNumber(): number }).toNumber();
   const proposalData = data[2] as { toHex(): string; toJSON(): unknown };
 
   const blockNumber = BigInt(block.block.header.number.toString());
@@ -72,8 +72,8 @@ export async function handleReferendumDecisionStarted(
   const { event: { data }, block } = event;
 
   // data: [index: u32, track: u16, proposal, tally: Tally]
-  const index = (data[0] as { toNumber(): number }).toNumber();
-  const track = (data[1] as { toNumber(): number }).toNumber();
+  const index = (data[0] as unknown as { toNumber(): number }).toNumber();
+  const track = (data[1] as unknown as { toNumber(): number }).toNumber();
   const tallyRaw = (data[3] as { toJSON(): unknown }).toJSON() as {
     ayes?: string;
     nays?: string;
@@ -101,7 +101,7 @@ export async function handleReferendumConfirmStarted(
 ): Promise<void> {
   const { event: { data }, block } = event;
 
-  const index = (data[0] as { toNumber(): number }).toNumber();
+  const index = (data[0] as unknown as { toNumber(): number }).toNumber();
   const blockNumber = BigInt(block.block.header.number.toString());
   const timestamp = block.timestamp ?? new Date();
   const subject = await GovernanceSubject.get(subjectId(index));
@@ -120,7 +120,7 @@ export async function handleReferendumConfirmAborted(
 ): Promise<void> {
   const { event: { data }, block } = event;
 
-  const index = (data[0] as { toNumber(): number }).toNumber();
+  const index = (data[0] as unknown as { toNumber(): number }).toNumber();
   const subject = await GovernanceSubject.get(subjectId(index));
   if (!subject) return;
 
@@ -137,7 +137,7 @@ export async function handleReferendumApproved(
 ): Promise<void> {
   const { event: { data }, block } = event;
 
-  const index = (data[0] as { toNumber(): number }).toNumber();
+  const index = (data[0] as unknown as { toNumber(): number }).toNumber();
   const blockNumber = BigInt(block.block.header.number.toString());
   const subject = await GovernanceSubject.get(subjectId(index));
   if (!subject) return;
@@ -155,7 +155,7 @@ export async function handleReferendumRejected(
 ): Promise<void> {
   const { event: { data }, block } = event;
 
-  const index = (data[0] as { toNumber(): number }).toNumber();
+  const index = (data[0] as unknown as { toNumber(): number }).toNumber();
   const blockNumber = BigInt(block.block.header.number.toString());
   const subject = await GovernanceSubject.get(subjectId(index));
   if (!subject) return;
@@ -173,7 +173,7 @@ export async function handleReferendumCancelled(
 ): Promise<void> {
   const { event: { data }, block } = event;
 
-  const index = (data[0] as { toNumber(): number }).toNumber();
+  const index = (data[0] as unknown as { toNumber(): number }).toNumber();
   const blockNumber = BigInt(block.block.header.number.toString());
   const subject = await GovernanceSubject.get(subjectId(index));
   if (!subject) return;
@@ -191,7 +191,7 @@ export async function handleReferendumTimedOut(
 ): Promise<void> {
   const { event: { data }, block } = event;
 
-  const index = (data[0] as { toNumber(): number }).toNumber();
+  const index = (data[0] as unknown as { toNumber(): number }).toNumber();
   const blockNumber = BigInt(block.block.header.number.toString());
   const subject = await GovernanceSubject.get(subjectId(index));
   if (!subject) return;
@@ -209,7 +209,7 @@ export async function handleReferendumKilled(
 ): Promise<void> {
   const { event: { data }, block } = event;
 
-  const index = (data[0] as { toNumber(): number }).toNumber();
+  const index = (data[0] as unknown as { toNumber(): number }).toNumber();
   const blockNumber = BigInt(block.block.header.number.toString());
   const subject = await GovernanceSubject.get(subjectId(index));
   if (!subject) return;

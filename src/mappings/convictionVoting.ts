@@ -4,10 +4,10 @@
  * Events handled: Voted, VoteRemoved, Delegated, Undelegated
  */
 
-import type { SubstrateEvent } from "@subql/types-substrate";
-import { GovernanceVote } from "../../types/models/GovernanceVote.js";
-import { GovernanceDelegation } from "../../types/models/GovernanceDelegation.js";
-import { CHAIN_ID, subjectId, voteId, delegationId } from "./utils.js";
+import type { SubstrateEvent } from "@subql/types";
+import { GovernanceVote } from "../types/models/GovernanceVote";
+import { GovernanceDelegation } from "../types/models/GovernanceDelegation";
+import { CHAIN_ID, subjectId, voteId, delegationId } from "./utils";
 
 // ─── Voted ───────────────────────────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ export async function handleVoteCast(event: SubstrateEvent): Promise<void> {
     string,
     unknown
   >;
-  const index = (data[2] as { toNumber(): number }).toNumber();
+  const index = (data[2] as unknown as { toNumber(): number }).toNumber();
   const blockNumber = BigInt(block.block.header.number.toString());
   const timestamp = block.timestamp ?? new Date();
 
@@ -68,7 +68,7 @@ export async function handleVoteCast(event: SubstrateEvent): Promise<void> {
       isRemoved: false,
       subjectId: subjectId(index),
       blockNumber,
-      extrinsicIndex: extrinsic?.idx ?? null,
+      extrinsicIndex: extrinsic?.idx ?? undefined,
       updatedAt: timestamp,
     });
   } else {
@@ -89,7 +89,7 @@ export async function handleVoteRemoved(event: SubstrateEvent): Promise<void> {
 
   // data: [who: AccountId, index: u32, vote: AccountVote]
   const voter = (data[0] as { toString(): string }).toString();
-  const index = (data[1] as { toNumber(): number }).toNumber();
+  const index = (data[1] as unknown as { toNumber(): number }).toNumber();
 
   const id = voteId(index, voter);
   const vote = await GovernanceVote.get(id);

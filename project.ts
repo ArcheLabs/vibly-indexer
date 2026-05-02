@@ -2,7 +2,7 @@ import {
   SubstrateDatasourceKind,
   SubstrateHandlerKind,
   type SubstrateProject,
-} from "@subql/types-substrate";
+} from "@subql/types";
 
 // ─── Project manifest ────────────────────────────────────────────────────────
 
@@ -12,8 +12,8 @@ const project: SubstrateProject = {
   version: "0.1.0",
   runner: {
     node: {
-      name: "@subql/node-substrate",
-      version: ">=3.0.0",
+      name: "@subql/node",
+      version: ">=3.0.1",
     },
     query: {
       name: "@subql/query",
@@ -27,11 +27,16 @@ const project: SubstrateProject = {
     file: "./schema.graphql",
   },
   network: {
-    // vibly-chain solo-node WebSocket endpoint (override via env ENDPOINT)
+    // vibly-chain solo-node WebSocket endpoint (override via env ENDPOINT at codegen/build time)
     endpoint: process.env["ENDPOINT"] ?? "ws://127.0.0.1:9944",
-    // genesis hash of the vibly-chain solo-node dev chain
-    // leave empty for auto-detection during development
-    chainId: process.env["CHAIN_ID"] ?? "",
+    /**
+     * SubQL validates this against the RPC; it must be the **genesis hash** (hex), not the logical
+     * coordinator id (`substrate:vibly-solo` — that stays in mapping `CHAIN_ID` / env at runtime).
+     * Override when pointing at another chain: SUBQL_GENESIS_CHAIN_ID=0x... npm run build
+     */
+    chainId:
+      process.env["SUBQL_GENESIS_CHAIN_ID"] ??
+      "0xbe833095c04ed041b47ea7aee77ea5ede620b91a9c44bc070e395443b906eb6b",
     bypassBlocks: [],
   },
   dataSources: [

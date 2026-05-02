@@ -1,5 +1,5 @@
-import type { SubstrateBlock } from "@subql/types-substrate";
-import { GovernanceCheckpoint } from "../types/models/GovernanceCheckpoint.js";
+import type { SubstrateBlock } from "@subql/types";
+import { GovernanceCheckpoint } from "../types/models/GovernanceCheckpoint";
 
 const CHAIN_ID = process.env["CHAIN_ID"] ?? "substrate:vibly-solo";
 

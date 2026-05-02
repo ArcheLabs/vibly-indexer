@@ -4,9 +4,9 @@
  * Events handled: Proposed, Approved, Rejected, Awarded
  */
 
-import type { SubstrateEvent } from "@subql/types-substrate";
-import { TreasuryProposal } from "../../types/models/TreasuryProposal.js";
-import { CHAIN_ID } from "./utils.js";
+import type { SubstrateEvent } from "@subql/types";
+import { TreasuryProposal } from "../types/models/TreasuryProposal";
+import { CHAIN_ID } from "./utils";
 
 function treasuryId(proposalIndex: number): string {
   return `${CHAIN_ID}:${proposalIndex}`;
@@ -20,7 +20,7 @@ export async function handleTreasuryProposed(
   // data: [proposalIndex: ProposalIndex]
   // Proposer/beneficiary/value/bond come from the extrinsic call.
   // For now we index the index + defaults; call handler can enrich later.
-  const proposalIndex = (data[0] as { toNumber(): number }).toNumber();
+  const proposalIndex = (data[0] as unknown as { toNumber(): number }).toNumber();
   const blockNumber = BigInt(block.block.header.number.toString());
   const timestamp = block.timestamp ?? new Date();
   const id = treasuryId(proposalIndex);
@@ -45,7 +45,7 @@ export async function handleTreasuryApproved(
 ): Promise<void> {
   const { event: { data }, block } = event;
 
-  const proposalIndex = (data[0] as { toNumber(): number }).toNumber();
+  const proposalIndex = (data[0] as unknown as { toNumber(): number }).toNumber();
   const proposal = await TreasuryProposal.get(treasuryId(proposalIndex));
   if (proposal) {
     proposal.status = "Approved";
@@ -59,7 +59,7 @@ export async function handleTreasuryRejected(
 ): Promise<void> {
   const { event: { data }, block } = event;
 
-  const proposalIndex = (data[0] as { toNumber(): number }).toNumber();
+  const proposalIndex = (data[0] as unknown as { toNumber(): number }).toNumber();
   const proposal = await TreasuryProposal.get(treasuryId(proposalIndex));
   if (proposal) {
     proposal.status = "Rejected";
@@ -73,7 +73,7 @@ export async function handleTreasuryAwarded(
 ): Promise<void> {
   const { event: { data }, block } = event;
 
-  const proposalIndex = (data[0] as { toNumber(): number }).toNumber();
+  const proposalIndex = (data[0] as unknown as { toNumber(): number }).toNumber();
   const proposal = await TreasuryProposal.get(treasuryId(proposalIndex));
   if (proposal) {
     proposal.status = "Awarded";
