@@ -1,7 +1,7 @@
 # // Auto-generated , DO NOT EDIT
 specVersion: 1.0.0
 name: vibly-indexer
-version: 0.1.0
+version: 0.2.0
 runner:
   node:
     name: '@subql/node'
@@ -10,8 +10,8 @@ runner:
     name: '@subql/query'
     version: '*'
 description: >-
-  Indexes vibly-chain solo-node OpenGov: referenda, conviction voting, preimage,
-  treasury
+  Indexes vibly-chain solo-node Vibly pallets: identity-core, payment-intent,
+  vibly-emergency
 repository: ''
 schema:
   file: ./schema.graphql
@@ -26,105 +26,125 @@ dataSources:
       file: ./dist/index.js
       handlers:
         - kind: substrate/EventHandler
-          handler: handleReferendumSubmitted
+          handler: handleIdentityRegistered
           filter:
-            module: referenda
-            method: Submitted
+            module: identityCore
+            method: IdentityRegistered
         - kind: substrate/EventHandler
-          handler: handleReferendumDecisionStarted
+          handler: handleOwnerKeyRotated
           filter:
-            module: referenda
-            method: DecisionStarted
+            module: identityCore
+            method: OwnerKeyRotated
         - kind: substrate/EventHandler
-          handler: handleReferendumConfirmStarted
+          handler: handleRecoveryKeySet
           filter:
-            module: referenda
-            method: ConfirmStarted
+            module: identityCore
+            method: RecoveryKeySet
         - kind: substrate/EventHandler
-          handler: handleReferendumApproved
+          handler: handleIdentityKeyAdded
           filter:
-            module: referenda
-            method: Approved
+            module: identityCore
+            method: IdentityKeyAdded
         - kind: substrate/EventHandler
-          handler: handleReferendumRejected
+          handler: handleIdentityKeyRevoked
           filter:
-            module: referenda
-            method: Rejected
+            module: identityCore
+            method: IdentityKeyRevoked
         - kind: substrate/EventHandler
-          handler: handleReferendumCancelled
+          handler: handleActiveProfileSet
           filter:
-            module: referenda
+            module: identityCore
+            method: ActiveProfileSet
+        - kind: substrate/EventHandler
+          handler: handleActiveAgentRegistrySet
+          filter:
+            module: identityCore
+            method: ActiveAgentRegistrySet
+        - kind: substrate/EventHandler
+          handler: handleActiveAuthRegistrySet
+          filter:
+            module: identityCore
+            method: ActiveAuthRegistrySet
+        - kind: substrate/EventHandler
+          handler: handleActiveRelationPolicySet
+          filter:
+            module: identityCore
+            method: ActiveRelationPolicySet
+        - kind: substrate/EventHandler
+          handler: handleTransportBound
+          filter:
+            module: identityCore
+            method: TransportBound
+        - kind: substrate/EventHandler
+          handler: handleTransportVerified
+          filter:
+            module: identityCore
+            method: TransportVerified
+        - kind: substrate/EventHandler
+          handler: handleTransportRevoked
+          filter:
+            module: identityCore
+            method: TransportRevoked
+        - kind: substrate/EventHandler
+          handler: handleIdentityFrozen
+          filter:
+            module: identityCore
+            method: IdentityFrozen
+        - kind: substrate/EventHandler
+          handler: handleIdentityUnfrozen
+          filter:
+            module: identityCore
+            method: IdentityUnfrozen
+        - kind: substrate/EventHandler
+          handler: handleIdentityDisabled
+          filter:
+            module: identityCore
+            method: IdentityDisabled
+        - kind: substrate/EventHandler
+          handler: handlePaymentIntentCreated
+          filter:
+            module: paymentIntent
+            method: PaymentIntentCreated
+        - kind: substrate/EventHandler
+          handler: handlePaymentIntentFunded
+          filter:
+            module: paymentIntent
+            method: PaymentIntentFunded
+        - kind: substrate/EventHandler
+          handler: handlePaymentIntentClaimed
+          filter:
+            module: paymentIntent
+            method: PaymentIntentClaimed
+        - kind: substrate/EventHandler
+          handler: handlePaymentIntentRefunded
+          filter:
+            module: paymentIntent
+            method: PaymentIntentRefunded
+        - kind: substrate/EventHandler
+          handler: handlePaymentIntentCancelled
+          filter:
+            module: paymentIntent
+            method: PaymentIntentCancelled
+        - kind: substrate/EventHandler
+          handler: handlePaymentIntentExpired
+          filter:
+            module: paymentIntent
+            method: PaymentIntentExpired
+        - kind: substrate/EventHandler
+          handler: handleEmergencyPaused
+          filter:
+            module: viblyEmergency
+            method: Paused
+        - kind: substrate/EventHandler
+          handler: handleEmergencyResumed
+          filter:
+            module: viblyEmergency
+            method: Resumed
+        - kind: substrate/EventHandler
+          handler: handleEmergencyCancelled
+          filter:
+            module: viblyEmergency
             method: Cancelled
-        - kind: substrate/EventHandler
-          handler: handleReferendumTimedOut
-          filter:
-            module: referenda
-            method: TimedOut
-        - kind: substrate/EventHandler
-          handler: handleReferendumKilled
-          filter:
-            module: referenda
-            method: Killed
-        - kind: substrate/EventHandler
-          handler: handleReferendumConfirmAborted
-          filter:
-            module: referenda
-            method: ConfirmAborted
-        - kind: substrate/EventHandler
-          handler: handleVoteCast
-          filter:
-            module: convictionVoting
-            method: Voted
-        - kind: substrate/EventHandler
-          handler: handleVoteRemoved
-          filter:
-            module: convictionVoting
-            method: VoteRemoved
-        - kind: substrate/EventHandler
-          handler: handleDelegated
-          filter:
-            module: convictionVoting
-            method: Delegated
-        - kind: substrate/EventHandler
-          handler: handleUndelegated
-          filter:
-            module: convictionVoting
-            method: Undelegated
-        - kind: substrate/EventHandler
-          handler: handlePreimageNoted
-          filter:
-            module: preimage
-            method: Noted
-        - kind: substrate/EventHandler
-          handler: handlePreimageRequested
-          filter:
-            module: preimage
-            method: Requested
-        - kind: substrate/EventHandler
-          handler: handlePreimageCleared
-          filter:
-            module: preimage
-            method: Cleared
-        - kind: substrate/EventHandler
-          handler: handleTreasuryProposed
-          filter:
-            module: treasury
-            method: Proposed
-        - kind: substrate/EventHandler
-          handler: handleTreasuryApproved
-          filter:
-            module: treasury
-            method: Approved
-        - kind: substrate/EventHandler
-          handler: handleTreasuryRejected
-          filter:
-            module: treasury
-            method: Rejected
-        - kind: substrate/EventHandler
-          handler: handleTreasuryAwarded
-          filter:
-            module: treasury
-            method: Awarded
         - kind: substrate/BlockHandler
           handler: handleBlock
           filter:

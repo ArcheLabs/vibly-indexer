@@ -1,117 +1,104 @@
 """
 GraphQL schema for vibly-indexer SubQuery project.
 
-Indexes vibly-chain solo-node OpenGov pallet events:
-  pallet_referenda, pallet_conviction_voting, pallet_preimage,
-  pallet_treasury
+Indexes vibly-chain solo-node Vibly pallet events:
+  pallet_identity_core, pallet_payment_intent, pallet_vibly_emergency
 """
 
 # ─── Checkpoint ──────────────────────────────────────────────────────────────
 
-type GovernanceCheckpoint @entity {
+type ChainCheckpoint @entity {
   """Singleton key: chain identifier, e.g. 'substrate:vibly-solo'"""
   id: ID!
+  chainId: String!
   blockNumber: BigInt!
   blockHash: String!
   updatedAt: Date!
 }
 
-# ─── Referenda (proposals) ───────────────────────────────────────────────────
+# ─── Identity ────────────────────────────────────────────────────────────────
 
-type GovernanceSubject @entity {
-  """Composite key: '<chainId>:<referendumIndex>'"""
+type ChainIdentity @entity {
+  """Composite key: '<chainId>:<identityId>'"""
   id: ID!
   chainId: String!
-  referendumIndex: Int!
-
-  # lifecycle
-  status: String!        # Submitted | Deciding | Confirming | Approved | Rejected | Cancelled | TimedOut | Killed
-  track: Int!
-  submittedAt: BigInt!
-  decidingSince: BigInt
-  confirmingSince: BigInt
-  endsAt: BigInt
-  decidedAt: BigInt
-
-  # proposal
-  proposalHash: String
-  proposalLen: Int
-  proposalDecoded: String  # hex-encoded, filled once preimage is noted
-
-  # tally (snapshot at latest event)
-  ayeVotes: BigInt!
-  nayVotes: BigInt!
-  abstainVotes: BigInt!
-  supportPct: Float
-
-  # relations
-  votes: [GovernanceVote] @derivedFrom(field: "subject")
-  delegations: [GovernanceDelegation] @derivedFrom(field: "subject")
-
-  updatedAt: Date!
+  identityId: String!
+  owner: String!
+  status: String!             # Active | Frozen | Disabled
+  activeProfile: String
+  activeAgentRegistry: String
+  activeAuthRegistry: String
+  activeRelationPolicy: String
+  nonce: BigInt
+  createdAtBlock: BigInt!
+  updatedAtBlock: BigInt!
 }
 
-# ─── Votes ───────────────────────────────────────────────────────────────────
-
-type GovernanceVote @entity {
-  """Composite key: '<chainId>:<referendumIndex>:<voter>'"""
+type IdentityKey @entity {
+  """Composite key: '<chainId>:<keyId>'"""
   id: ID!
   chainId: String!
-  referendumIndex: Int!
-  voter: String!
-  stance: String!            # Aye | Nay | Abstain
-  conviction: Int!           # 0-6
-  balance: BigInt!
-  isRemoved: Boolean!
-  subject: GovernanceSubject!
+  identityId: String!
+  keyId: String!
+  account: String!
+  purpose: String!
+  status: String!             # Active | Revoked
+  updatedAtBlock: BigInt!
+}
+
+# ─── Payment Intent ──────────────────────────────────────────────────────────
+
+type PaymentIntent @entity {
+  """Composite key: '<chainId>:<intentId>'"""
+  id: ID!
+  chainId: String!
+  intentId: String!
+  payerIdentityId: String!
+  payeeIdentityId: String!
+  amount: BigInt!
+  settlementMode: String!     # Direct | Hold
+  actionNamespace: String
+  actionId: String
+  status: String!             # Created | Funded | Claimed | Refunded | Cancelled | Expired
+  createdAtBlock: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+type SettlementEvent @entity {
+  """Composite key: '<chainId>:<intentId>:<blockNumber>:<eventIndex>'"""
+  id: ID!
+  chainId: String!
+  intentId: String!
+  eventType: String!          # Claimed | Refunded | Cancelled | Expired
   blockNumber: BigInt!
   extrinsicIndex: Int
-  updatedAt: Date!
+  eventIndex: Int!
+  blockHash: String!
+  timestamp: Date
 }
 
-# ─── Delegations ─────────────────────────────────────────────────────────────
+# ─── Emergency ───────────────────────────────────────────────────────────────
 
-type GovernanceDelegation @entity {
-  """Composite key: '<chainId>:<track>:<delegator>'"""
+type EmergencyStatus @entity {
+  """Composite key: '<chainId>:<scope>'"""
   id: ID!
   chainId: String!
-  track: Int!
-  delegator: String!
-  delegatee: String!
-  conviction: Int!
-  balance: BigInt!
-  isActive: Boolean!
-  subject: GovernanceSubject
-  blockNumber: BigInt!
-  updatedAt: Date!
+  scope: String!
+  status: String!             # Active | Paused | Cancelled
+  reasonHash: String
+  updatedBy: String
+  updatedAtBlock: BigInt!
 }
 
-# ─── Preimages ───────────────────────────────────────────────────────────────
+# ─── Penalty (future) ────────────────────────────────────────────────────────
 
-type Preimage @entity {
-  """Preimage hash"""
+type PenaltyRecord @entity {
+  """Composite key: '<chainId>:<identityId>:<blockNumber>'"""
   id: ID!
   chainId: String!
-  hash: String!
-  data: String!      # hex
-  len: Int!
-  status: String!    # Noted | Requested | Cleared
+  identityId: String!
+  reasonHash: String!
+  amount: BigInt
+  sourceRef: String
   blockNumber: BigInt!
-  updatedAt: Date!
-}
-
-# ─── Treasury ────────────────────────────────────────────────────────────────
-
-type TreasuryProposal @entity {
-  """Composite key: '<chainId>:<proposalIndex>'"""
-  id: ID!
-  chainId: String!
-  proposalIndex: Int!
-  proposer: String!
-  beneficiary: String!
-  value: BigInt!
-  bond: BigInt!
-  status: String!    # Proposed | Approved | Rejected | Awarded | Rejected
-  blockNumber: BigInt!
-  updatedAt: Date!
 }

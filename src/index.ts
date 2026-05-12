@@ -8,35 +8,36 @@
 export { handleBlock } from "./mappings/block";
 
 export {
-  handleReferendumSubmitted,
-  handleReferendumDecisionStarted,
-  handleReferendumConfirmStarted,
-  handleReferendumConfirmAborted,
-  handleReferendumApproved,
-  handleReferendumRejected,
-  handleReferendumCancelled,
-  handleReferendumTimedOut,
-  handleReferendumKilled,
-} from "./mappings/referenda";
+  handleIdentityRegistered,
+  handleOwnerKeyRotated,
+  handleRecoveryKeySet,
+  handleIdentityKeyAdded,
+  handleIdentityKeyRevoked,
+  handleActiveProfileSet,
+  handleActiveAgentRegistrySet,
+  handleActiveAuthRegistrySet,
+  handleActiveRelationPolicySet,
+  handleTransportBound,
+  handleTransportVerified,
+  handleTransportRevoked,
+  handleIdentityFrozen,
+  handleIdentityUnfrozen,
+  handleIdentityDisabled,
+} from "./mappings/identityCore";
 
 export {
-  handleVoteCast,
-  handleVoteRemoved,
-  handleDelegated,
-  handleUndelegated,
-} from "./mappings/convictionVoting";
+  handlePaymentIntentCreated,
+  handlePaymentIntentFunded,
+  handlePaymentIntentClaimed,
+  handlePaymentIntentRefunded,
+  handlePaymentIntentCancelled,
+  handlePaymentIntentExpired,
+} from "./mappings/paymentIntent";
 
 export {
-  handlePreimageNoted,
-  handlePreimageRequested,
-  handlePreimageCleared,
-} from "./mappings/preimage";
-
-export {
-  handleTreasuryProposed,
-  handleTreasuryApproved,
-  handleTreasuryRejected,
-  handleTreasuryAwarded,
-} from "./mappings/treasury";
+  handleEmergencyPaused,
+  handleEmergencyResumed,
+  handleEmergencyCancelled,
+} from "./mappings/emergency";
 
 import "@polkadot/api-augment";

@@ -9,7 +9,7 @@ import {
 const project: SubstrateProject = {
   specVersion: "1.0.0",
   name: "vibly-indexer",
-  version: "0.1.0",
+  version: "0.2.0",
   runner: {
     node: {
       name: "@subql/node",
@@ -21,7 +21,7 @@ const project: SubstrateProject = {
     },
   },
   description:
-    "Indexes vibly-chain solo-node OpenGov: referenda, conviction voting, preimage, treasury",
+    "Indexes vibly-chain solo-node Vibly pallets: identity-core, payment-intent, vibly-emergency",
   repository: "",
   schema: {
     file: "./schema.graphql",
@@ -29,11 +29,6 @@ const project: SubstrateProject = {
   network: {
     // vibly-chain solo-node WebSocket endpoint (override via env ENDPOINT at codegen/build time)
     endpoint: process.env["ENDPOINT"] ?? "ws://127.0.0.1:9944",
-    /**
-     * SubQL validates this against the RPC; it must be the **genesis hash** (hex), not the logical
-     * coordinator id (`substrate:vibly-solo` — that stays in mapping `CHAIN_ID` / env at runtime).
-     * Override when pointing at another chain: SUBQL_GENESIS_CHAIN_ID=0x... npm run build
-     */
     chainId:
       process.env["SUBQL_GENESIS_CHAIN_ID"] ??
       "0xbe833095c04ed041b47ea7aee77ea5ede620b91a9c44bc070e395443b906eb6b",
@@ -46,111 +41,130 @@ const project: SubstrateProject = {
       mapping: {
         file: "./dist/index.js",
         handlers: [
-          // ── pallet_referenda ──────────────────────────────────────────────
+          // ── pallet_identity_core ──────────────────────────────────────────
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleReferendumSubmitted",
-            filter: { module: "referenda", method: "Submitted" },
+            handler: "handleIdentityRegistered",
+            filter: { module: "identityCore", method: "IdentityRegistered" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleReferendumDecisionStarted",
-            filter: { module: "referenda", method: "DecisionStarted" },
+            handler: "handleOwnerKeyRotated",
+            filter: { module: "identityCore", method: "OwnerKeyRotated" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleReferendumConfirmStarted",
-            filter: { module: "referenda", method: "ConfirmStarted" },
+            handler: "handleRecoveryKeySet",
+            filter: { module: "identityCore", method: "RecoveryKeySet" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleReferendumApproved",
-            filter: { module: "referenda", method: "Approved" },
+            handler: "handleIdentityKeyAdded",
+            filter: { module: "identityCore", method: "IdentityKeyAdded" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleReferendumRejected",
-            filter: { module: "referenda", method: "Rejected" },
+            handler: "handleIdentityKeyRevoked",
+            filter: { module: "identityCore", method: "IdentityKeyRevoked" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleReferendumCancelled",
-            filter: { module: "referenda", method: "Cancelled" },
+            handler: "handleActiveProfileSet",
+            filter: { module: "identityCore", method: "ActiveProfileSet" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleReferendumTimedOut",
-            filter: { module: "referenda", method: "TimedOut" },
+            handler: "handleActiveAgentRegistrySet",
+            filter: { module: "identityCore", method: "ActiveAgentRegistrySet" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleReferendumKilled",
-            filter: { module: "referenda", method: "Killed" },
+            handler: "handleActiveAuthRegistrySet",
+            filter: { module: "identityCore", method: "ActiveAuthRegistrySet" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleReferendumConfirmAborted",
-            filter: { module: "referenda", method: "ConfirmAborted" },
-          },
-          // ── pallet_conviction_voting ─────────────────────────────────────
-          {
-            kind: SubstrateHandlerKind.Event,
-            handler: "handleVoteCast",
-            filter: { module: "convictionVoting", method: "Voted" },
+            handler: "handleActiveRelationPolicySet",
+            filter: { module: "identityCore", method: "ActiveRelationPolicySet" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleVoteRemoved",
-            filter: { module: "convictionVoting", method: "VoteRemoved" },
+            handler: "handleTransportBound",
+            filter: { module: "identityCore", method: "TransportBound" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleDelegated",
-            filter: { module: "convictionVoting", method: "Delegated" },
+            handler: "handleTransportVerified",
+            filter: { module: "identityCore", method: "TransportVerified" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleUndelegated",
-            filter: { module: "convictionVoting", method: "Undelegated" },
-          },
-          // ── pallet_preimage ──────────────────────────────────────────────
-          {
-            kind: SubstrateHandlerKind.Event,
-            handler: "handlePreimageNoted",
-            filter: { module: "preimage", method: "Noted" },
+            handler: "handleTransportRevoked",
+            filter: { module: "identityCore", method: "TransportRevoked" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handlePreimageRequested",
-            filter: { module: "preimage", method: "Requested" },
+            handler: "handleIdentityFrozen",
+            filter: { module: "identityCore", method: "IdentityFrozen" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handlePreimageCleared",
-            filter: { module: "preimage", method: "Cleared" },
-          },
-          // ── pallet_treasury ──────────────────────────────────────────────
-          {
-            kind: SubstrateHandlerKind.Event,
-            handler: "handleTreasuryProposed",
-            filter: { module: "treasury", method: "Proposed" },
+            handler: "handleIdentityUnfrozen",
+            filter: { module: "identityCore", method: "IdentityUnfrozen" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleTreasuryApproved",
-            filter: { module: "treasury", method: "Approved" },
+            handler: "handleIdentityDisabled",
+            filter: { module: "identityCore", method: "IdentityDisabled" },
+          },
+          // ── pallet_payment_intent ─────────────────────────────────────────
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handlePaymentIntentCreated",
+            filter: { module: "paymentIntent", method: "PaymentIntentCreated" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleTreasuryRejected",
-            filter: { module: "treasury", method: "Rejected" },
+            handler: "handlePaymentIntentFunded",
+            filter: { module: "paymentIntent", method: "PaymentIntentFunded" },
           },
           {
             kind: SubstrateHandlerKind.Event,
-            handler: "handleTreasuryAwarded",
-            filter: { module: "treasury", method: "Awarded" },
+            handler: "handlePaymentIntentClaimed",
+            filter: { module: "paymentIntent", method: "PaymentIntentClaimed" },
           },
-          // ── checkpoint (per-block) ───────────────────────────────────────
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handlePaymentIntentRefunded",
+            filter: { module: "paymentIntent", method: "PaymentIntentRefunded" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handlePaymentIntentCancelled",
+            filter: { module: "paymentIntent", method: "PaymentIntentCancelled" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handlePaymentIntentExpired",
+            filter: { module: "paymentIntent", method: "PaymentIntentExpired" },
+          },
+          // ── pallet_vibly_emergency ────────────────────────────────────────
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleEmergencyPaused",
+            filter: { module: "viblyEmergency", method: "Paused" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleEmergencyResumed",
+            filter: { module: "viblyEmergency", method: "Resumed" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleEmergencyCancelled",
+            filter: { module: "viblyEmergency", method: "Cancelled" },
+          },
+          // ── checkpoint (per-block) ────────────────────────────────────────
           {
             kind: SubstrateHandlerKind.Block,
             handler: "handleBlock",

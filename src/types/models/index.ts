@@ -2,15 +2,17 @@
 
 // Auto-generated , DO NOT EDIT
 
-export {GovernanceCheckpoint} from "./GovernanceCheckpoint"
+export {ChainCheckpoint} from "./ChainCheckpoint"
 
-export {GovernanceSubject} from "./GovernanceSubject"
+export {ChainIdentity} from "./ChainIdentity"
 
-export {GovernanceVote} from "./GovernanceVote"
+export {IdentityKey} from "./IdentityKey"
 
-export {GovernanceDelegation} from "./GovernanceDelegation"
+export {PaymentIntent} from "./PaymentIntent"
 
-export {Preimage} from "./Preimage"
+export {SettlementEvent} from "./SettlementEvent"
 
-export {TreasuryProposal} from "./TreasuryProposal"
+export {EmergencyStatus} from "./EmergencyStatus"
+
+export {PenaltyRecord} from "./PenaltyRecord"
 

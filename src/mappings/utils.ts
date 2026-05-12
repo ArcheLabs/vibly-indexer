@@ -4,14 +4,26 @@
 
 export const CHAIN_ID = process.env["CHAIN_ID"] ?? "substrate:vibly-solo";
 
-export function subjectId(referendumIndex: number): string {
-  return `${CHAIN_ID}:${referendumIndex}`;
+export function identityEntityId(identityId: string): string {
+  return `${CHAIN_ID}:${identityId}`;
 }
 
-export function voteId(referendumIndex: number, voter: string): string {
-  return `${CHAIN_ID}:${referendumIndex}:${voter}`;
+export function identityKeyEntityId(keyId: string): string {
+  return `${CHAIN_ID}:${keyId}`;
 }
 
-export function delegationId(track: number, delegator: string): string {
-  return `${CHAIN_ID}:${track}:${delegator}`;
+export function paymentIntentEntityId(intentId: string): string {
+  return `${CHAIN_ID}:${intentId}`;
+}
+
+export function settlementEventEntityId(
+  intentId: string,
+  blockNumber: bigint,
+  eventIndex: number,
+): string {
+  return `${CHAIN_ID}:${intentId}:${blockNumber}:${eventIndex}`;
+}
+
+export function emergencyStatusEntityId(scope: string): string {
+  return `${CHAIN_ID}:${scope}`;
 }
