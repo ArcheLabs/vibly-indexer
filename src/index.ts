@@ -40,4 +40,13 @@ export {
   handleEmergencyCancelled,
 } from "./mappings/emergency";
 
+export {
+  handleAgentStakeBonded,
+  handleAgentStakeUnbondRequested,
+  handleAgentStakeUnbondCancelled,
+  handleAgentStakeReleaseBlocked,
+  handleAgentStakeReleaseCleared,
+  handleAgentStakeReleased,
+} from "./mappings/agentStaking";
+
 import "@polkadot/api-augment";

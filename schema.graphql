@@ -77,6 +77,43 @@ type SettlementEvent @entity {
   timestamp: Date
 }
 
+# ─── Agent Stake ─────────────────────────────────────────────────────────────
+
+type AgentStakeLedger @entity {
+  """Composite key: '<chainId>:<identityId>:<agentId>'"""
+  id: ID!
+  chainId: String!
+  identityId: String!
+  agentId: String!
+  fundingAccount: String
+  activeAmount: BigInt!
+  unbondingAmount: BigInt!
+  status: String!             # Active | Unbonding | Released
+  unlockAtBlock: BigInt
+  releaseBlocked: Boolean!
+  releaseBlockReason: String
+  updatedAtBlock: BigInt!
+}
+
+type AgentStakeEvent @entity {
+  """Composite key: '<chainId>:<identityId>:<agentId>:<blockNumber>:<eventIndex>'"""
+  id: ID!
+  chainId: String!
+  identityId: String!
+  agentId: String!
+  fundingAccount: String
+  eventType: String!
+  amount: BigInt
+  activeAmount: BigInt
+  unlockAtBlock: BigInt
+  reasonRef: String
+  blockNumber: BigInt!
+  extrinsicIndex: Int
+  eventIndex: Int!
+  blockHash: String!
+  timestamp: Date
+}
+
 # ─── Emergency ───────────────────────────────────────────────────────────────
 
 type EmergencyStatus @entity {

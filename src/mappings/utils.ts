@@ -24,6 +24,19 @@ export function settlementEventEntityId(
   return `${CHAIN_ID}:${intentId}:${blockNumber}:${eventIndex}`;
 }
 
+export function agentStakeLedgerEntityId(identityId: string, agentId: string): string {
+  return `${CHAIN_ID}:${identityId}:${agentId}`;
+}
+
+export function agentStakeEventEntityId(
+  identityId: string,
+  agentId: string,
+  blockNumber: bigint,
+  eventIndex: number,
+): string {
+  return `${CHAIN_ID}:${identityId}:${agentId}:${blockNumber}:${eventIndex}`;
+}
+
 export function emergencyStatusEntityId(scope: string): string {
   return `${CHAIN_ID}:${scope}`;
 }

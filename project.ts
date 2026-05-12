@@ -148,6 +148,37 @@ const project: SubstrateProject = {
             handler: "handlePaymentIntentExpired",
             filter: { module: "paymentIntent", method: "PaymentIntentExpired" },
           },
+          // ── pallet_agent_staking ─────────────────────────────────────────
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleAgentStakeBonded",
+            filter: { module: "agentStaking", method: "AgentStakeBonded" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleAgentStakeUnbondRequested",
+            filter: { module: "agentStaking", method: "AgentStakeUnbondRequested" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleAgentStakeUnbondCancelled",
+            filter: { module: "agentStaking", method: "AgentStakeUnbondCancelled" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleAgentStakeReleaseBlocked",
+            filter: { module: "agentStaking", method: "AgentStakeReleaseBlocked" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleAgentStakeReleaseCleared",
+            filter: { module: "agentStaking", method: "AgentStakeReleaseCleared" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleAgentStakeReleased",
+            filter: { module: "agentStaking", method: "AgentStakeReleased" },
+          },
           // ── pallet_vibly_emergency ────────────────────────────────────────
           {
             kind: SubstrateHandlerKind.Event,

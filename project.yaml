@@ -131,6 +131,36 @@ dataSources:
             module: paymentIntent
             method: PaymentIntentExpired
         - kind: substrate/EventHandler
+          handler: handleAgentStakeBonded
+          filter:
+            module: agentStaking
+            method: AgentStakeBonded
+        - kind: substrate/EventHandler
+          handler: handleAgentStakeUnbondRequested
+          filter:
+            module: agentStaking
+            method: AgentStakeUnbondRequested
+        - kind: substrate/EventHandler
+          handler: handleAgentStakeUnbondCancelled
+          filter:
+            module: agentStaking
+            method: AgentStakeUnbondCancelled
+        - kind: substrate/EventHandler
+          handler: handleAgentStakeReleaseBlocked
+          filter:
+            module: agentStaking
+            method: AgentStakeReleaseBlocked
+        - kind: substrate/EventHandler
+          handler: handleAgentStakeReleaseCleared
+          filter:
+            module: agentStaking
+            method: AgentStakeReleaseCleared
+        - kind: substrate/EventHandler
+          handler: handleAgentStakeReleased
+          filter:
+            module: agentStaking
+            method: AgentStakeReleased
+        - kind: substrate/EventHandler
           handler: handleEmergencyPaused
           filter:
             module: viblyEmergency

@@ -12,6 +12,10 @@ export {PaymentIntent} from "./PaymentIntent"
 
 export {SettlementEvent} from "./SettlementEvent"
 
+export {AgentStakeLedger} from "./AgentStakeLedger"
+
+export {AgentStakeEvent} from "./AgentStakeEvent"
+
 export {EmergencyStatus} from "./EmergencyStatus"
 
 export {PenaltyRecord} from "./PenaltyRecord"
