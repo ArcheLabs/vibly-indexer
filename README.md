@@ -1,191 +1,178 @@
 # vibly-indexer
 
-vibly-indexer 是基于 [SubQuery](https://subquery.network/) 的链上事件索引器，专门索引 **vibly-chain solo-node** 上的 OpenGov pallet 事件，并通过 GraphQL API 对外提供查询。
+`vibly-indexer` is a [SubQuery](https://subquery.network/)-based on-chain event indexer for the Vibly network. It indexes **vibly-chain solo-node** pallets and exposes a GraphQL API consumed by `vibly-coordinator` for read-model projections and stake synchronisation.
 
-`vibly-coordinator` 通过 `@concord/adapter-substrate-indexer` 消费该 GraphQL API，构建链上 governance 读模型。
+## Indexed pallets
 
-## 架构位置
+| Pallet | Indexed entities |
+|---|---|
+| `pallet-identity-core` | `ChainIdentity`, `IdentityKey` |
+| `pallet-payment-intent` | `PaymentIntent`, `SettlementEvent` |
+| `pallet-agent-staking` | `AgentStakeLedger`, `AgentStakeEvent` |
+| `pallet-vibly-emergency` | `EmergencyStatus` |
+| Block metadata | `ChainCheckpoint` |
 
-```
-vibly-chain solo-node (ws://127.0.0.1:9944)
-       │ WebSocket 订阅
-       ▼
-vibly-indexer (SubQuery Node)
-  - 索引 pallet_referenda 事件
-  - 索引 pallet_conviction_voting 事件
-  - 索引 pallet_preimage 事件
-  - 索引 pallet_treasury 事件
-  - 每 10 块更新 GovernanceCheckpoint
-       │ GraphQL
-       ▼
-http://localhost:3010/graphql
-       │
-       ▼
-@concord/adapter-substrate-indexer
-  SubQueryGovernanceIndexAdapter
-       │
-       ▼
-vibly-coordinator GovernanceIndexConsumer
-  → governance_view projections
-```
+## Quick start
 
-## 快速启动
-
-SubQuery 会把当前目录挂载到 `/app`，**必须先在本机生成清单与编译产物**（`project.yaml`、`dist/`、`src/types/`）。若跳过这一步，`subquery-node` 会报 `Unable to resolve manifest` / `Could not find manifest` 并不断重启，`graphql-engine` 会因依赖 **healthy** 条件而无法启动。
+SubQuery requires a compiled manifest and output artefacts (`project.yaml`, `dist/`, `src/types/`) to be present before the Docker services start.
 
 ```bash
 cd vibly-indexer
 
-# 推荐使用 lockfile，避免依赖漂移
+# Install dependencies (use lockfile to avoid drift)
 npm ci
 
-# 生成实体模型并打包映射（subql codegen && subql build）
+# Generate entity models and compile mappings
 npm run build
 
-# 启动 Postgres + SubQuery Node + GraphQL Engine
+# Start Postgres + SubQuery Node + GraphQL Engine
 docker compose up -d
 
-# 查看日志
+# Follow logs
 docker compose logs -f subql-node
 ```
 
-`docker-compose.yml` 会通过 **`--network-endpoint`**（Compose 解析 `${ENDPOINT:-ws://host.docker.internal:9944}`）把 WS 传给节点；也可在运行 `docker compose` 前于宿主机导出 `ENDPOINT`。Linux 若未配置 `host.docker.internal`，请改成宿主机真实可达地址。
+GraphQL Playground: `http://localhost:3010/graphql`
 
-GraphQL Playground：`http://localhost:3010/graphql`
+## Docker Compose services
 
-### 常见问题
-
-- **`dependency failed to start: ... subquery-node ... unhealthy`**：几乎都是尚未执行 `npm run build`，挂载目录里没有 `project.yaml` / `dist/`。按上文顺序先 `npm ci`（或 `npm install`）再 `npm run build`，然后重新 `docker compose up -d`。
-- **`network.chainId ... isNotEmpty`**：`project.yaml` 里 **`network.chainId` 不能为空**。请重新执行 `npm run build`（确保使用当前仓库里的 `project.ts` 默认值）。
-- **`Value of ChainId does not match across all endpoints` / `Expected ... Actual 0x...`**：`project.yaml` 里的 `network.chainId` 必须是 **创世哈希（hex）**，不能与映射里用的逻辑链名（如 `substrate:vibly-solo`）混用。仓库默认写入了当前 **vibly-chain solo `--dev`** 的 genesis；若换了 runtime/spec，请在连上节点后重新生成清单：  
-  `SUBQL_GENESIS_CHAIN_ID=0x… npm run build`  
-  （映射实体里的 `CHAIN_ID` 仍通过 Compose 的 `CHAIN_ID` 设为逻辑 id，与 coordinator 约定一致。）
-- **`Btree_gist extension is required`**：新建数据库时会通过 `docker/init-subquery.sql` 安装扩展；**已有数据卷**若从未装过扩展，可在运行中的库里执行：  
-  `docker compose exec postgres psql -U subquery -d vibly_indexer -c 'CREATE EXTENSION IF NOT EXISTS btree_gist;'`  
-  当前 compose 同时为节点加了 **`--disable-historical`**，可在未装扩展的开发库里先跑通索引（不需要 historical 实体时可保留）。
-- **`npm install` / `npm ci` 报 `EACCES`**：若曾用 Docker（root）挂载目录执行过 `npm install` / `subql build`，在仓库根目录执行 `sudo chown -R "$(id -u):$(id -g)" .` 后再重试。
-
-## 环境变量
-
-| 变量 | 默认值 | 说明 |
+| Service | Image | Port |
 |---|---|---|
-| `ENDPOINT` | `ws://host.docker.internal:9944` | vibly-chain WebSocket 端点（Compose 传给 SubQuery Node） |
-| `CHAIN_ID` | `substrate:vibly-solo` | **运行时**写入实体/主键前缀的逻辑链 id（与 coordinator 一致），**不要**用作 `project.yaml` 的 `network.chainId` |
-| `SUBQL_GENESIS_CHAIN_ID` | （见 `project.ts` 内建 dev 哈希） | 仅在执行 **`npm run build` 生成 `project.yaml` 时**覆盖 `network.chainId`；需与 RPC 返回的 genesis 一致 |
-| `START_BLOCK` | `1` | 开始索引的块号 |
+| `postgres` | `postgres:16-alpine` | 5432 |
+| `subql-node` | `subquerynetwork/subql-node-substrate:latest` | — |
+| `graphql-engine` | `subquerynetwork/subql-query:latest` | **3010** |
 
-> 本地开发时若 `vibly-chain` 和 `docker compose` 在同一机器上，默认端点已正确指向宿主机。
+The SubQuery node reaches the chain via `--network-endpoint` (`${ENDPOINT:-ws://host.docker.internal:9944}`). On Linux, `host.docker.internal` is mapped to the host gateway via `extra_hosts` in `docker-compose.yml`.
 
-## GraphQL Schema
+## Environment variables
 
-### GovernanceCheckpoint
-
-| 字段 | 类型 | 说明 |
+| Variable | Default | Description |
 |---|---|---|
-| `id` | `ID!` | 链标识符（如 `substrate:vibly-solo`）|
-| `blockNumber` | `BigInt!` | 最新已索引块号 |
-| `blockHash` | `String!` | 最新已索引块 hash |
-| `updatedAt` | `Date!` | 更新时间 |
+| `ENDPOINT` | `ws://host.docker.internal:9944` | vibly-chain WebSocket endpoint passed to the SubQuery node |
+| `CHAIN_ID` | `substrate:vibly-solo` | Logical chain ID written as the entity key prefix (must match coordinator config) |
+| `SUBQL_GENESIS_CHAIN_ID` | *(built-in dev genesis hash)* | Used only during `npm run build` to set `network.chainId` in `project.yaml`; must equal the actual genesis hash returned by the RPC |
+| `START_BLOCK` | `1` | First block to index |
 
-### GovernanceSubject（公投）
+## GraphQL schema
 
-| 字段 | 类型 | 说明 |
+### ChainCheckpoint
+
+| Field | Type | Description |
 |---|---|---|
-| `id` | `ID!` | `<chainId>:<referendumIndex>` |
-| `status` | `String!` | `Submitted \| Deciding \| Confirming \| Approved \| Rejected \| Cancelled \| TimedOut \| Killed` |
-| `track` | `Int!` | 投票轨道 |
-| `ayeVotes / nayVotes / abstainVotes` | `BigInt!` | 票数快照 |
-| `proposalHash` | `String` | 提案 hash |
-| `votes` | `[GovernanceVote]` | 关联投票（派生） |
+| `id` | `ID!` | Chain identifier (e.g. `substrate:vibly-solo`) |
+| `blockNumber` | `BigInt!` | Latest indexed block number |
+| `blockHash` | `String!` | Latest indexed block hash |
+| `updatedAt` | `Date!` | Timestamp of last update |
 
-### GovernanceVote
+### ChainIdentity
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 |---|---|---|
-| `id` | `ID!` | `<chainId>:<referendumIndex>:<voter>` |
-| `stance` | `String!` | `Aye \| Nay \| Abstain` |
-| `conviction` | `Int!` | 信念值 0–6 |
-| `balance` | `BigInt!` | 锁定余额 |
-| `isRemoved` | `Boolean!` | 是否已撤销 |
+| `id` | `ID!` | `<chainId>:<identityId>` |
+| `identityId` | `String!` | On-chain H256 identity ID |
+| `owner` | `String!` | Owner account (SS58) |
+| `status` | `String!` | `Active \| Frozen \| Disabled` |
+| `createdAtBlock` | `BigInt!` | Block of registration |
 
-### GovernanceDelegation
+### AgentStakeLedger
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 |---|---|---|
-| `id` | `ID!` | `<chainId>:<track>:<delegator>` |
-| `delegatee` | `String!` | 受委托地址 |
-| `conviction` | `Int!` | 信念值 |
-| `isActive` | `Boolean!` | 是否有效 |
+| `id` | `ID!` | `<chainId>:<identityId>:<agentId>` |
+| `agentId` | `String!` | On-chain H256 agent ID |
+| `activeAmount` | `BigInt!` | Currently bonded amount |
+| `unbondingAmount` | `BigInt!` | Amount in unbonding period |
+| `status` | `String!` | `Active \| Unbonding \| Released` |
+| `unlockAtBlock` | `BigInt` | Block after which stake can be withdrawn |
+| `releaseBlocked` | `Boolean!` | Whether release is blocked by an active obligation |
+| `updatedAtBlock` | `BigInt!` | Last update block |
 
-### Preimage / TreasuryProposal
+### PaymentIntent
 
-参见 `schema.graphql`。
+| Field | Type | Description |
+|---|---|---|
+| `id` | `ID!` | `<chainId>:<intentId>` |
+| `payerIdentityId` | `String!` | Payer identity |
+| `payeeIdentityId` | `String!` | Payee identity |
+| `amount` | `BigInt!` | Intent amount |
+| `status` | `String!` | `Created \| Funded \| Claimed \| Refunded \| Cancelled \| Expired` |
 
-## 示例查询
+### EmergencyStatus
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `ID!` | `<chainId>:<scope>` |
+| `status` | `String!` | `Active \| Paused \| Cancelled` |
+| `updatedAtBlock` | `BigInt!` | Last update block |
+
+For the full schema see [`schema.graphql`](schema.graphql).
+
+## Example queries
 
 ```graphql
-# 最新 checkpoint
+# Latest checkpoint
 query {
-  governanceCheckpoint(id: "substrate:vibly-solo") {
+  chainCheckpoint(id: "substrate:vibly-solo") {
     blockNumber
     blockHash
     updatedAt
   }
 }
 
-# 列出所有公投
+# Agent stake ledger for a specific agent
 query {
-  governanceSubjects(orderBy: SUBMITTED_AT_DESC, first: 20) {
+  agentStakeLedgers(
+    filter: { agentId: { equalTo: "0x…" } }
+  ) {
     nodes {
-      id
-      referendumIndex
+      agentId
+      activeAmount
       status
-      track
-      ayeVotes
-      nayVotes
+      releaseBlocked
+      updatedAtBlock
     }
   }
 }
 
-# 某公投的投票列表
+# Payment intents by payer
 query {
-  governanceVotes(filter: { referendumIndex: { equalTo: 0 } }) {
+  paymentIntents(
+    filter: { payerIdentityId: { equalTo: "0x…" } }
+    orderBy: CREATED_AT_BLOCK_DESC
+    first: 20
+  ) {
     nodes {
-      voter
-      stance
-      conviction
-      balance
+      intentId
+      amount
+      status
     }
   }
 }
 ```
 
-## Phase E readback checklist
+## Troubleshooting
 
-For the Vibly Chain / OpenGov real loop, the indexer is expected to provide the coordinator with:
+**`dependency failed to start: subql-node unhealthy`** — Almost always caused by missing `npm run build`. Run `npm ci && npm run build`, then `docker compose up -d`.
 
-- `GovernanceSubject` after `referenda.Submitted`, with a stable `referendumIndex` and `id`.
-- Updated subject status after `DecisionStarted`, `ConfirmStarted`, `Approved`, `Rejected`, `Cancelled`, `TimedOut`, or `Killed`.
-- `GovernanceVote` after `convictionVoting.Voted`, including `voter`, `stance`, `conviction`, `balance`, `blockNumber`, and `extrinsicIndex`.
-- `GovernanceCheckpoint` updates so coordinator backend freshness is per chain.
+**`network.chainId … isNotEmpty`** — The `project.yaml` `network.chainId` is empty. Re-run `npm run build`.
 
-The Substrate event JSON shape can use either lower-case or PascalCase enum variant keys. Vote mapping handles both forms for `Standard`, `Split`, and `SplitAbstain`.
+**`Value of ChainId does not match across all endpoints`** — The `network.chainId` in `project.yaml` must be the **genesis hash** (hex), not the logical chain ID like `substrate:vibly-solo`. Override with `SUBQL_GENESIS_CHAIN_ID=0x… npm run build`.
 
-## Docker Compose 服务
+**`Btree_gist extension is required`** — Install the extension in the running database:
+```bash
+docker compose exec postgres psql -U subquery -d vibly_indexer \
+  -c 'CREATE EXTENSION IF NOT EXISTS btree_gist;'
+```
 
-| 服务 | 镜像 | 端口 |
-|---|---|---|
-| `postgres` | `postgres:16-alpine` | 5432 |
-| `subql-node` | `subquerynetwork/subql-node-substrate:latest` | — |
-| `graphql-engine` | `subquerynetwork/subql-query:latest` | **3010** |
+**`EACCES` on npm install** — Previous Docker root-owned build artefacts. Fix with:
+```bash
+sudo chown -R "$(id -u):$(id -g)" .
+```
 
-## 开发
+## Development (without Docker)
 
 ```bash
-# 本地（不用 Docker）
-pnpm install
-pnpm codegen    # 生成 SubQuery 类型
-pnpm build      # 编译 TypeScript
+npm ci
+npm run codegen    # generate SubQuery entity types
+npm run build      # compile TypeScript
 ```
-
-SubQuery CLI 文档：https://academy.subquery.network
