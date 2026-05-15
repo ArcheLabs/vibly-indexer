@@ -17,7 +17,7 @@ schema:
   file: ./schema.graphql
 network:
   endpoint: ws://127.0.0.1:9944
-  chainId: '0xbe833095c04ed041b47ea7aee77ea5ede620b91a9c44bc070e395443b906eb6b'
+  chainId: '0xc0e4f12d16bef8ea244bdda30897260f52efd9934dd1a3ce9d9bf00ec95708ea'
   bypassBlocks: []
 dataSources:
   - kind: substrate/Runtime
@@ -175,7 +175,3 @@ dataSources:
           filter:
             module: viblyEmergency
             method: Cancelled
-        - kind: substrate/BlockHandler
-          handler: handleBlock
-          filter:
-            modulo: 10
