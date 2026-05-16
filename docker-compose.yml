@@ -1,11 +1,13 @@
 services:
   # ── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16
     environment:
       POSTGRES_DB: vibly_indexer
       POSTGRES_USER: subquery
       POSTGRES_PASSWORD: subquery
+      # Force C locale so initdb never fails on systems with minimal locale support.
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
     ports:
       - "5432:5432"
     volumes:
@@ -15,7 +17,8 @@ services:
       test: ["CMD-SHELL", "pg_isready -U subquery -d vibly_indexer"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
+      start_period: 30s
 
   # ── SubQuery node ───────────────────────────────────────────────────────────
   subquery-node:
