@@ -26,11 +26,6 @@ type RewardLedgerSnapshot = {
   claimedTask: bigint;
 };
 
-type AgentRef = {
-  identityId: string;
-  agentId: string;
-};
-
 function str(v: unknown): string {
   return (v as { toString(): string }).toString();
 }
@@ -66,21 +61,6 @@ function zeroSnapshot(): RewardLedgerSnapshot {
   };
 }
 
-function deltaSnapshot(next: RewardLedgerSnapshot, prev: RewardLedgerSnapshot): RewardLedgerSnapshot {
-  return {
-    claimableTotal: next.claimableTotal - prev.claimableTotal,
-    claimedTotal: next.claimedTotal - prev.claimedTotal,
-    claimableBase: next.claimableBase - prev.claimableBase,
-    claimableObserver: next.claimableObserver - prev.claimableObserver,
-    claimableReviewer: next.claimableReviewer - prev.claimableReviewer,
-    claimableTask: next.claimableTask - prev.claimableTask,
-    claimedBase: next.claimedBase - prev.claimedBase,
-    claimedObserver: next.claimedObserver - prev.claimedObserver,
-    claimedReviewer: next.claimedReviewer - prev.claimedReviewer,
-    claimedTask: next.claimedTask - prev.claimedTask,
-  };
-}
-
 function parseLedgerJson(raw: Record<string, unknown> | null): RewardLedgerSnapshot {
   if (!raw) return zeroSnapshot();
   return {
@@ -103,19 +83,15 @@ async function fetchRewardLedger(identityId: string, agentId: string): Promise<R
     const record = await (api as any).query.agentIncentives.agentRewardLedgers([identityId, agentId]);
     const json = record.toJSON() as Record<string, unknown> | null;
     return parseLedgerJson(json);
-  } catch (_) {
+  } catch (cause) {
+    console.warn(`agentIncentives ledger storage read failed for ${identityId}/${agentId}: ${cause instanceof Error ? cause.message : String(cause)}`);
     return zeroSnapshot();
   }
 }
 
-async function upsertRewardLedger(
-  event: SubstrateEvent,
-  identityId: string,
-  agentId: string,
-): Promise<{ next: RewardLedgerSnapshot; delta: RewardLedgerSnapshot }> {
-  const id = agentRewardLedgerEntityId(identityId, agentId);
-  const existing = await AgentRewardLedger.get(id);
-  const prev: RewardLedgerSnapshot = existing
+async function readIndexedRewardLedger(identityId: string, agentId: string): Promise<RewardLedgerSnapshot> {
+  const existing = await AgentRewardLedger.get(agentRewardLedgerEntityId(identityId, agentId));
+  return existing
     ? {
         claimableTotal: existing.claimableTotal,
         claimedTotal: existing.claimedTotal,
@@ -129,17 +105,24 @@ async function upsertRewardLedger(
         claimedTask: existing.claimedTask,
       }
     : zeroSnapshot();
-  const next = await fetchRewardLedger(identityId, agentId);
+}
+
+async function saveRewardLedgerSnapshot(
+  event: SubstrateEvent,
+  identityId: string,
+  agentId: string,
+  snapshot: RewardLedgerSnapshot,
+): Promise<void> {
+  const id = agentRewardLedgerEntityId(identityId, agentId);
   const ledger = AgentRewardLedger.create({
     id,
     chainId: CHAIN_ID,
     identityId,
     agentId,
-    ...next,
+    ...snapshot,
     updatedAtBlock: blockNum(event.block),
   });
   await ledger.save();
-  return { next, delta: deltaSnapshot(next, prev) };
 }
 
 async function upsertRewardDayState(event: SubstrateEvent, dayIndex: number): Promise<void> {
@@ -168,28 +151,9 @@ async function upsertRewardDayState(event: SubstrateEvent, dayIndex: number): Pr
       updatedAtBlock: blockNum(event.block),
     });
     await row.save();
-  } catch (_) {
-    // Ignore transient storage decoding errors.
+  } catch (cause) {
+    console.warn(`agentIncentives day storage read failed for day ${dayIndex}: ${cause instanceof Error ? cause.message : String(cause)}`);
   }
-}
-
-function parseAgentRefs(raw: unknown): AgentRef[] {
-  const json = (raw as { toJSON?: () => unknown }).toJSON?.() ?? raw;
-  if (!Array.isArray(json)) return [];
-  return json
-    .map((item) => item as Record<string, unknown>)
-    .filter((item) => item && item["identityId"] != null && item["agentId"] != null)
-    .map((item) => ({
-      identityId: String(item["identityId"]),
-      agentId: String(item["agentId"]),
-    }));
-}
-
-function extrinsicArgs(event: SubstrateEvent): unknown[] {
-  const extrinsic = event.extrinsic as
-    | { extrinsic?: { method?: { args?: unknown[] } } }
-    | undefined;
-  return extrinsic?.extrinsic?.method?.args ?? [];
 }
 
 async function appendRewardEvent(
@@ -237,24 +201,60 @@ async function appendRewardEvent(
   await row.save();
 }
 
+function normalizeRewardKind(value: unknown): "Base" | "Observer" | "Reviewer" | "Task" {
+  const json = (value as { toJSON?: () => unknown }).toJSON?.() ?? value;
+  if (typeof json === "string") {
+    const lower = json.toLowerCase();
+    if (lower === "observer") return "Observer";
+    if (lower === "reviewer") return "Reviewer";
+    if (lower === "task") return "Task";
+    return "Base";
+  }
+  if (json && typeof json === "object") {
+    const key = Object.keys(json as Record<string, unknown>)[0]?.toLowerCase();
+    if (key === "observer") return "Observer";
+    if (key === "reviewer") return "Reviewer";
+    if (key === "task") return "Task";
+  }
+  return "Base";
+}
+
+function creditSnapshot(snapshot: RewardLedgerSnapshot, kind: "Base" | "Observer" | "Reviewer" | "Task", amount: bigint): RewardLedgerSnapshot {
+  const next = { ...snapshot, claimableTotal: snapshot.claimableTotal + amount };
+  if (kind === "Base") next.claimableBase += amount;
+  if (kind === "Observer") next.claimableObserver += amount;
+  if (kind === "Reviewer") next.claimableReviewer += amount;
+  if (kind === "Task") next.claimableTask += amount;
+  return next;
+}
+
+export async function handleAgentRewardCredited(event: SubstrateEvent): Promise<void> {
+  const { data } = event.event;
+  const identityId = str(data[0]);
+  const agentId = str(data[1]);
+  const dayIndex = num(data[2]);
+  const kind = normalizeRewardKind(data[3]);
+  const amount = big(data[4]);
+  const previous = await readIndexedRewardLedger(identityId, agentId);
+  await saveRewardLedgerSnapshot(event, identityId, agentId, creditSnapshot(previous, kind, amount));
+  await appendRewardEvent(event, {
+    identityId,
+    agentId,
+    eventType: "AgentRewardCredited",
+    rewardKind: kind,
+    amount,
+    baseAmount: kind === "Base" ? amount : undefined,
+    observerAmount: kind === "Observer" ? amount : undefined,
+    reviewerAmount: kind === "Reviewer" ? amount : undefined,
+    taskAmount: kind === "Task" ? amount : undefined,
+    dayIndex,
+  });
+}
+
 export async function handleBaseStakingDaySettled(event: SubstrateEvent): Promise<void> {
   const { data } = event.event;
   const dayIndex = num(data[0]);
   await upsertRewardDayState(event, dayIndex);
-  const participants = parseAgentRefs(extrinsicArgs(event)[1]);
-  for (const participant of participants) {
-    const { delta } = await upsertRewardLedger(event, participant.identityId, participant.agentId);
-    if (delta.claimableBase === BigInt(0)) continue;
-    await appendRewardEvent(event, {
-      identityId: participant.identityId,
-      agentId: participant.agentId,
-      eventType: "BaseStakingDaySettled",
-      rewardKind: "Base",
-      amount: delta.claimableBase,
-      baseAmount: delta.claimableBase,
-      dayIndex,
-    });
-  }
 }
 
 async function handleRoundSettled(
@@ -268,8 +268,6 @@ async function handleRoundSettled(
   const totalEffectiveStake = big(data[3]);
   const released = big(data[4]);
   const rollover = big(data[5]);
-  const participants = parseAgentRefs(extrinsicArgs(event)[2]);
-
   await upsertRewardDayState(event, dayIndex);
   const settlement = RoundRewardSettlement.create({
     id: roundRewardSettlementEntityId(role, roundId),
@@ -285,22 +283,6 @@ async function handleRoundSettled(
   });
   await settlement.save();
 
-  for (const participant of participants) {
-    const { delta } = await upsertRewardLedger(event, participant.identityId, participant.agentId);
-    const amount = role === "Observer" ? delta.claimableObserver : delta.claimableReviewer;
-    if (amount === BigInt(0)) continue;
-    await appendRewardEvent(event, {
-      identityId: participant.identityId,
-      agentId: participant.agentId,
-      eventType: `${role}RoundSettled`,
-      rewardKind: role,
-      amount,
-      observerAmount: role === "Observer" ? amount : undefined,
-      reviewerAmount: role === "Reviewer" ? amount : undefined,
-      dayIndex,
-      roundId,
-    });
-  }
 }
 
 export async function handleObserverRoundSettled(event: SubstrateEvent): Promise<void> {
@@ -322,7 +304,6 @@ export async function handleTaskRewardSettled(event: SubstrateEvent): Promise<vo
   const amount = big(data[5]);
 
   await upsertRewardDayState(event, dayIndex);
-  await upsertRewardLedger(event, identityId, agentId);
 
   const settlement = TaskRewardSettlement.create({
     id: taskRewardSettlementEntityId(taskId),
@@ -336,17 +317,6 @@ export async function handleTaskRewardSettled(event: SubstrateEvent): Promise<vo
     blockNumber: blockNum(event.block),
   });
   await settlement.save();
-
-  await appendRewardEvent(event, {
-    identityId,
-    agentId,
-    eventType: "TaskRewardSettled",
-    rewardKind: "Task",
-    amount,
-    taskAmount: amount,
-    dayIndex,
-    taskId,
-  });
 }
 
 export async function handleAgentRewardClaimed(event: SubstrateEvent): Promise<void> {
@@ -355,7 +325,8 @@ export async function handleAgentRewardClaimed(event: SubstrateEvent): Promise<v
   const agentId = str(data[1]);
   const ownerAccount = str(data[2]);
   const amount = big(data[3]);
-  const { delta } = await upsertRewardLedger(event, identityId, agentId);
+  const snapshot = await fetchRewardLedger(identityId, agentId);
+  await saveRewardLedgerSnapshot(event, identityId, agentId, snapshot);
 
   await appendRewardEvent(event, {
     identityId,
@@ -363,10 +334,10 @@ export async function handleAgentRewardClaimed(event: SubstrateEvent): Promise<v
     eventType: "AgentRewardClaimed",
     rewardKind: "Claim",
     amount,
-    baseAmount: delta.claimedBase,
-    observerAmount: delta.claimedObserver,
-    reviewerAmount: delta.claimedReviewer,
-    taskAmount: delta.claimedTask,
+    baseAmount: snapshot.claimedBase,
+    observerAmount: snapshot.claimedObserver,
+    reviewerAmount: snapshot.claimedReviewer,
+    taskAmount: snapshot.claimedTask,
     ownerAccount,
   });
 }

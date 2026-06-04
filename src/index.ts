@@ -54,6 +54,7 @@ export {
   handleObserverRoundSettled,
   handleReviewerRoundSettled,
   handleTaskRewardSettled,
+  handleAgentRewardCredited,
   handleAgentRewardClaimed,
 } from "./mappings/agentIncentives";
 

@@ -161,6 +161,36 @@ dataSources:
             module: agentStaking
             method: AgentStakeReleased
         - kind: substrate/EventHandler
+          handler: handleBaseStakingDaySettled
+          filter:
+            module: agentIncentives
+            method: BaseStakingDaySettled
+        - kind: substrate/EventHandler
+          handler: handleObserverRoundSettled
+          filter:
+            module: agentIncentives
+            method: ObserverRoundSettled
+        - kind: substrate/EventHandler
+          handler: handleReviewerRoundSettled
+          filter:
+            module: agentIncentives
+            method: ReviewerRoundSettled
+        - kind: substrate/EventHandler
+          handler: handleTaskRewardSettled
+          filter:
+            module: agentIncentives
+            method: TaskRewardSettled
+        - kind: substrate/EventHandler
+          handler: handleAgentRewardCredited
+          filter:
+            module: agentIncentives
+            method: AgentRewardCredited
+        - kind: substrate/EventHandler
+          handler: handleAgentRewardClaimed
+          filter:
+            module: agentIncentives
+            method: AgentRewardClaimed
+        - kind: substrate/EventHandler
           handler: handleEmergencyPaused
           filter:
             module: viblyEmergency

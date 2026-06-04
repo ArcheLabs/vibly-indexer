@@ -179,6 +179,37 @@ const project: SubstrateProject = {
             handler: "handleAgentStakeReleased",
             filter: { module: "agentStaking", method: "AgentStakeReleased" },
           },
+          // ── pallet_agent_incentives ──────────────────────────────────────
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleBaseStakingDaySettled",
+            filter: { module: "agentIncentives", method: "BaseStakingDaySettled" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleObserverRoundSettled",
+            filter: { module: "agentIncentives", method: "ObserverRoundSettled" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleReviewerRoundSettled",
+            filter: { module: "agentIncentives", method: "ReviewerRoundSettled" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleTaskRewardSettled",
+            filter: { module: "agentIncentives", method: "TaskRewardSettled" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleAgentRewardCredited",
+            filter: { module: "agentIncentives", method: "AgentRewardCredited" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleAgentRewardClaimed",
+            filter: { module: "agentIncentives", method: "AgentRewardClaimed" },
+          },
           // ── pallet_vibly_emergency ────────────────────────────────────────
           {
             kind: SubstrateHandlerKind.Event,
