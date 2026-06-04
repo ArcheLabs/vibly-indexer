@@ -49,4 +49,12 @@ export {
   handleAgentStakeReleased,
 } from "./mappings/agentStaking";
 
+export {
+  handleBaseStakingDaySettled,
+  handleObserverRoundSettled,
+  handleReviewerRoundSettled,
+  handleTaskRewardSettled,
+  handleAgentRewardClaimed,
+} from "./mappings/agentIncentives";
+
 import "@polkadot/api-augment";

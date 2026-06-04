@@ -114,6 +114,99 @@ type AgentStakeEvent @entity {
   timestamp: Date
 }
 
+# ─── Agent Incentives ────────────────────────────────────────────────────────
+
+type AgentRewardLedger @entity {
+  """Composite key: '<chainId>:<identityId>:<agentId>'"""
+  id: ID!
+  chainId: String!
+  identityId: String!
+  agentId: String!
+  claimableTotal: BigInt!
+  claimedTotal: BigInt!
+  claimableBase: BigInt!
+  claimableObserver: BigInt!
+  claimableReviewer: BigInt!
+  claimableTask: BigInt!
+  claimedBase: BigInt!
+  claimedObserver: BigInt!
+  claimedReviewer: BigInt!
+  claimedTask: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+type RewardDayState @entity {
+  """Composite key: '<chainId>:<dayIndex>'"""
+  id: ID!
+  chainId: String!
+  dayIndex: Int!
+  baseStakingBudget: BigInt!
+  observerReviewerBudget: BigInt!
+  taskMarketBudget: BigInt!
+  baseStakingReleased: BigInt!
+  observerReviewerReleased: BigInt!
+  taskMarketReleased: BigInt!
+  rolloverBaseStaking: BigInt!
+  rolloverObserverReviewer: BigInt!
+  rolloverTaskMarket: BigInt!
+  baseStakingSettled: Boolean!
+  observerRoundsSettled: Int!
+  reviewerRoundsSettled: Int!
+  taskRewardsSettled: Int!
+  updatedAtBlock: BigInt!
+}
+
+type RoundRewardSettlement @entity {
+  """Composite key: '<chainId>:<role>:<roundId>'"""
+  id: ID!
+  chainId: String!
+  roundId: String!
+  role: String!
+  dayIndex: Int!
+  participantCount: Int!
+  totalEffectiveStake: BigInt!
+  released: BigInt!
+  rollover: BigInt!
+  blockNumber: BigInt!
+}
+
+type TaskRewardSettlement @entity {
+  """Composite key: '<chainId>:<taskId>'"""
+  id: ID!
+  chainId: String!
+  taskId: String!
+  identityId: String!
+  agentId: String!
+  difficulty: String!
+  amount: BigInt!
+  dayIndex: Int!
+  blockNumber: BigInt!
+}
+
+type AgentRewardEvent @entity {
+  """Composite key: '<chainId>:<identityId>:<agentId>:<blockNumber>:<eventIndex>'"""
+  id: ID!
+  chainId: String!
+  identityId: String!
+  agentId: String!
+  eventType: String!
+  rewardKind: String!
+  amount: BigInt!
+  baseAmount: BigInt!
+  observerAmount: BigInt!
+  reviewerAmount: BigInt!
+  taskAmount: BigInt!
+  dayIndex: Int
+  roundId: String
+  taskId: String
+  ownerAccount: String
+  blockNumber: BigInt!
+  extrinsicIndex: Int
+  eventIndex: Int!
+  blockHash: String!
+  timestamp: Date
+}
+
 # ─── Emergency ───────────────────────────────────────────────────────────────
 
 type EmergencyStatus @entity {
