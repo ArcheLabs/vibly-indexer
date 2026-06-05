@@ -44,6 +44,23 @@ GraphQL Playground: `http://localhost:3010/graphql`
 
 The SubQuery node reaches the chain via `--network-endpoint` (`${ENDPOINT:-ws://host.docker.internal:9944}`). On Linux, `host.docker.internal` is mapped to the host gateway via `extra_hosts` in `docker-compose.yml`.
 
+## Hosted deployment
+
+`vibly-indexer` is not a single binary service. A correct hosted deployment always includes:
+
+- Postgres
+- one SubQuery node
+- one SubQuery query service
+
+For small environments, the simplest production shape is a VM running this repository's Docker Compose stack, usually beside the Vibly chain RPC or on a private peer VM with low-latency access to it.
+
+When deployed for public networks:
+
+- `Lumen` still indexes the Vibly chain itself; Get VIB relay-side deposits come from Paseo, not from a separately hosted payment chain
+- `Monolith` still indexes the Vibly chain itself; Get VIB relay-side deposits come from Polkadot mainnet, not from a separately hosted payment chain
+
+The deployment script in `vibly-e2e-lab` now treats indexer rollout as a VM + Docker Compose concern rather than a serverless app concern.
+
 ## Environment variables
 
 | Variable | Default | Description |
