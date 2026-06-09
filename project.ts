@@ -29,6 +29,11 @@ const project: SubstrateProject = {
   network: {
     // vibly-chain solo-node WebSocket endpoint (override via env ENDPOINT at codegen/build time)
     endpoint: process.env["ENDPOINT"] ?? "ws://127.0.0.1:9944",
+    // ⚠  SUBQL_GENESIS_CHAIN_ID 必须在部署时设置！
+    // 构建前请确认 genesis hash 匹配链节点。获取方式：
+    //   curl -s <rpc> -H 'content-type: application/json' \
+    //     -d '{"id":1,"jsonrpc":"2.0","method":"chain_getBlockHash","params":[0]}'
+    // 然后设置: SUBQL_GENESIS_CHAIN_ID=0x... npm run build
     chainId:
       process.env["SUBQL_GENESIS_CHAIN_ID"] ??
       "0xbe833095c04ed041b47ea7aee77ea5ede620b91a9c44bc070e395443b906eb6b",
