@@ -44,7 +44,10 @@ services:
       - "--db-schema=app"
       - "--workers=1"
       - "--batch-size=30"
-      - "--unfinalized-blocks"
+      # --unfinalized-blocks is omitted here because Solo / force-authoring
+      # chains do not produce reliable on-chain timestamps. If you need it
+      # on a public network (Lumen / Monolith), re-add it.
+      # - "--unfinalized-blocks"
       - "--disable-historical"
       - "--network-endpoint"
       - "${ENDPOINT:-ws://host.docker.internal:9944}"
