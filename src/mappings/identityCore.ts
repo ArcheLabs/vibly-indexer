@@ -6,6 +6,7 @@
  *   IdentityKeyAdded, IdentityKeyRevoked,
  *   ActiveProfileSet, ActiveAgentRegistrySet, ActiveAuthRegistrySet, ActiveRelationPolicySet,
  *   TransportBound, TransportVerified, TransportRevoked,
+ *   EvmRootBound, EvmAddressLinked, EvmAddressUnlinked,
  *   IdentityFrozen, IdentityUnfrozen, IdentityDisabled
  */
 
@@ -260,6 +261,33 @@ export async function handleTransportVerified(event: SubstrateEvent): Promise<vo
 
 export async function handleTransportRevoked(event: SubstrateEvent): Promise<void> {
   await touchIdentity(event);
+}
+
+
+// ─── EVM address bindings ───────────────────────────────────────────────────
+
+async function setIdentityEvmAddress(event: SubstrateEvent, nextAddress: string | undefined): Promise<void> {
+  const { event: { data }, block } = event;
+  const identityId = str(data[0]);
+  const identity = await getIdentity(identityId);
+  if (!identity) return;
+  identity.evmAddress = nextAddress;
+  identity.updatedAtBlock = blockNum(block);
+  await identity.save();
+}
+
+export async function handleEvmRootBound(event: SubstrateEvent): Promise<void> {
+  const { event: { data } } = event;
+  await setIdentityEvmAddress(event, str(data[1]).toLowerCase());
+}
+
+export async function handleEvmAddressLinked(event: SubstrateEvent): Promise<void> {
+  const { event: { data } } = event;
+  await setIdentityEvmAddress(event, str(data[1]).toLowerCase());
+}
+
+export async function handleEvmAddressUnlinked(event: SubstrateEvent): Promise<void> {
+  await setIdentityEvmAddress(event, undefined);
 }
 
 // ─── IdentityFrozen ──────────────────────────────────────────────────────────

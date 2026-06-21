@@ -38,6 +38,7 @@ export class ChainIdentity implements CompatEntity {
     public chainId: string;
     public identityId: string;
     public owner: string;
+    public evmAddress?: string;
     public status: string;
     public activeProfile?: string;
     public activeAgentRegistry?: string;

@@ -86,6 +86,21 @@ dataSources:
             module: identityCore
             method: TransportRevoked
         - kind: substrate/EventHandler
+          handler: handleEvmRootBound
+          filter:
+            module: identityCore
+            method: EvmRootBound
+        - kind: substrate/EventHandler
+          handler: handleEvmAddressLinked
+          filter:
+            module: identityCore
+            method: EvmAddressLinked
+        - kind: substrate/EventHandler
+          handler: handleEvmAddressUnlinked
+          filter:
+            module: identityCore
+            method: EvmAddressUnlinked
+        - kind: substrate/EventHandler
           handler: handleIdentityFrozen
           filter:
             module: identityCore

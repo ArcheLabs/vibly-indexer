@@ -24,6 +24,7 @@ type ChainIdentity @entity {
   chainId: String!
   identityId: String!
   owner: String!
+  evmAddress: String
   status: String!             # Active | Frozen | Disabled
   activeProfile: String
   activeAgentRegistry: String

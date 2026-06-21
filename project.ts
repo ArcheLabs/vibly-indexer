@@ -109,6 +109,21 @@ const project: SubstrateProject = {
           },
           {
             kind: SubstrateHandlerKind.Event,
+            handler: "handleEvmRootBound",
+            filter: { module: "identityCore", method: "EvmRootBound" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleEvmAddressLinked",
+            filter: { module: "identityCore", method: "EvmAddressLinked" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
+            handler: "handleEvmAddressUnlinked",
+            filter: { module: "identityCore", method: "EvmAddressUnlinked" },
+          },
+          {
+            kind: SubstrateHandlerKind.Event,
             handler: "handleIdentityFrozen",
             filter: { module: "identityCore", method: "IdentityFrozen" },
           },
