@@ -36,7 +36,7 @@ const project: SubstrateProject = {
     // 然后设置: SUBQL_GENESIS_CHAIN_ID=0x... npm run build
     chainId:
       process.env["SUBQL_GENESIS_CHAIN_ID"] ??
-      "0xbe833095c04ed041b47ea7aee77ea5ede620b91a9c44bc070e395443b906eb6b",
+      "0xbc48c1341363fb8dbd33c19c2cfb7a3e9a42a9a2d582b7fc7b5eec149f6b7ee6",
     bypassBlocks: [],
   },
   dataSources: [
